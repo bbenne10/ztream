@@ -1,0 +1,60 @@
+#! /bin/zsh
+t_station
+PLAYER='mpv'
+PLAYER_OPTS='--no-video'
+
+typeset -A stations
+stations=('beatblender' http://sfstream1.somafm.com:8384
+          'cliq hop' http://mp2.somafm.com:2668
+          'drone zone' http://mp4.somafm.com:80
+          'Def Con' http://sfstream1.somafm.com:6200
+          'drum n bass' http://nrgetik.streams.dnbradio.at.ilovedrumnbass.com:8000/
+          'dubstep beyond' http://mp1.somafm.com:8400
+          'groove salad' http://voxsc1.somafm.com:8032
+          'sonic universe' http://mp2.somafm.com:8604
+
+          # This works with a list of files or (with mpv) youtube links; one per line
+          # 'test ' '--playlist=/home/bryan/dotfiles/bin/test'
+)
+
+###############################################################################
+# Unless you have an idea of what you're doing, there's no need to head below.
+###############################################################################
+
+function play_station() {
+    pkill $PLAYER 
+    station=$1; 
+    echo "Playing $station..."
+    echo $station >! $LAST_STATION_PATH
+    $PLAYER $PLAYER_OPTS $stations[$station] 1&2 2>/dev/null &
+}
+
+actions=('change' 'random' 'last' 'stop')
+
+action=$(print -r -l ${actions} | dmenu)
+
+if [ -n $action ]; then
+    if [ $action = 'change' ]; then
+        # pick a new station
+        station=$(print -r -l ${(k)stations} | sort | dmenu)
+        if [ -n $station ]; then
+            play_station $station
+        fi
+
+    elif [ $action = 'random' ]; then
+        # pick a random station from above
+        station=${(k)stations[$RANDOM%${#${(k)stations}}+1]}
+        integer index=$RANDOM%${#${(k)stations}}+1
+        station=${${(k)stations}[$index]}
+        play_station $station
+
+    elif [ $action = 'last' ]; then 
+        # choose the last station
+        station=$(cat $LAST_STATION_PATH)
+        play_station $station
+
+    elif [ $action = 'stop' ]; then 
+        # STAHP
+        pkill $PLAYER
+    fi 
+fi

@@ -2,6 +2,7 @@
 
 PLAYER='mpv'
 PLAYER_OPTS='--no-video'
+LAST_STATION_PATH="$HOME/.last_station"
 
 typeset -A stations
 stations=('beatblender' http://sfstream1.somafm.com:8384
@@ -28,7 +29,6 @@ function get_action() {
     else
         action=$(print -r -l ${actions} | dmenu)
     fi
-    echo $action
 }
 
 function play_station() {
@@ -39,30 +39,47 @@ function play_station() {
     $PLAYER $PLAYER_OPTS $stations[$station] 1&2 2>/dev/null &
 }
 
+function parse_action() {
+    if [ -n $action ]; then
+        if [ $action = 'change' ]; then
+            # pick a new station
+            station=$(print -r -l ${(k)stations} | sort | dmenu)
+            if [ -n $station ]; then
+                play_station $station
+            fi
+
+        elif [ $action = 'random' ]; then
+            # pick a random station from above
+            integer index=$RANDOM%${#${(k)stations}}+1
+            station=${${(k)stations}[$index]}
+            play_station $station
+
+        elif [ $action = 'last' ]; then 
+            # choose the last station
+            station=$(cat $LAST_STATION_PATH)
+            echo $station
+            if [ -n $station ]; then
+                if [ ${actions[(r)$station]} ]; then
+                    play_station $station
+                else
+                    echo "Invalid last station found! Populating randomly..."
+                    action='random'
+                    parse_action $action
+                fi
+            else 
+                echo "No last station found! Populating randomly..."
+                action='random'
+                parse_action $action
+            fi
+
+
+        elif [ $action = 'stop' ]; then 
+            # STAHP
+            pkill $PLAYER
+        fi 
+    fi
+}
+
 action=""
 get_action $1
-
-if [ -n $action ]; then
-    if [ $action = 'change' ]; then
-        # pick a new station
-        station=$(print -r -l ${(k)stations} | sort | dmenu)
-        if [ -n $station ]; then
-            play_station $station
-        fi
-
-    elif [ $action = 'random' ]; then
-        # pick a random station from above
-        integer index=$RANDOM%${#${(k)stations}}+1
-        station=${${(k)stations}[$index]}
-        play_station $station
-
-    elif [ $action = 'last' ]; then 
-        # choose the last station
-        station=$(cat $LAST_STATION_PATH)
-        play_station $station
-
-    elif [ $action = 'stop' ]; then 
-        # STAHP
-        pkill $PLAYER
-    fi 
-fi
+parse_action $action

@@ -1,5 +1,5 @@
 #! /bin/zsh
-t_station
+
 PLAYER='mpv'
 PLAYER_OPTS='--no-video'
 
@@ -21,6 +21,16 @@ stations=('beatblender' http://sfstream1.somafm.com:8384
 # Unless you have an idea of what you're doing, there's no need to head below.
 ###############################################################################
 
+function get_action() {
+    actions=('change' 'random' 'last' 'stop')
+    if [ ${actions[(r)$1]} ]; then 
+        action=$1
+    else
+        action=$(print -r -l ${actions} | dmenu)
+    fi
+    echo $action
+}
+
 function play_station() {
     pkill $PLAYER 
     station=$1; 
@@ -29,9 +39,8 @@ function play_station() {
     $PLAYER $PLAYER_OPTS $stations[$station] 1&2 2>/dev/null &
 }
 
-actions=('change' 'random' 'last' 'stop')
-
-action=$(print -r -l ${actions} | dmenu)
+action=""
+get_action $1
 
 if [ -n $action ]; then
     if [ $action = 'change' ]; then
@@ -43,7 +52,6 @@ if [ -n $action ]; then
 
     elif [ $action = 'random' ]; then
         # pick a random station from above
-        station=${(k)stations[$RANDOM%${#${(k)stations}}+1]}
         integer index=$RANDOM%${#${(k)stations}}+1
         station=${${(k)stations}[$index]}
         play_station $station

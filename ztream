@@ -13,6 +13,7 @@ stations=('beatblender' http://sfstream1.somafm.com:8384
           'dubstep beyond' http://mp1.somafm.com:8400
           'groove salad' http://voxsc1.somafm.com:8032
           'sonic universe' http://mp2.somafm.com:8604
+          'YT: majesticcasual' '--playlist=majesticcasual'
 
           # This works with a list of files or (with mpv) youtube links; one per line
           # 'test ' '--playlist=/home/bryan/dotfiles/bin/test'

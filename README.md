@@ -8,8 +8,5 @@ You can configure some of the behavior by modifying the global variables above
 the 'fold'. 
 
 #### TODO:
-  
-- parameter handing to all the user to skip selecting an action
-- interacting with the underlying process? (this might require standardizing on a backend)
-- ???
-- PROFIT!
+
+  -  ??? I have no new ideas yet...

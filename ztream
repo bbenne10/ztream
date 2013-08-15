@@ -3,6 +3,8 @@
 PLAYER='mpv'
 PLAYER_OPTS='--no-video'
 LAST_STATION_PATH="$HOME/.last_station"
+FIFO=1
+FIFO_PATH="$HOME/.ztream_fifo"
 
 typeset -A stations
 stations=('beatblender' http://sfstream1.somafm.com:8384
@@ -37,7 +39,15 @@ function play_station() {
     station=$1; 
     echo "Playing $station..."
     echo $station >! $LAST_STATION_PATH
-    $PLAYER $PLAYER_OPTS $stations[$station] 1&2 2>/dev/null &
+    if [ $FIFO ]; then
+        if [ ! -p $FIFO_PATH ]; then
+            mkfifo "$FIFO_PATH"
+            exit
+        fi
+        $PLAYER $PLAYER_OPTS --input-file="$FIFO_PATH" $stations[$station] 1>&2 2>/dev/null &
+    else
+        $PLAYER $PLAYER_OPTS $stations[$station] 1>&2 2>/dev/null &
+    fi;
 }
 
 function parse_action() {

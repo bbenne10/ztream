@@ -69,17 +69,18 @@ function parse_action() {
         elif [ $action = 'last' ]; then 
             # choose the last station
             station=$(cat $LAST_STATION_PATH)
-            echo $station
             if [ -n $station ]; then
-                if [ ${actions[(r)$station]} ]; then
+                if [ ${(k)actions[(r)$station]} ]; then
                     play_station $station
                 else
                     echo "Invalid last station found! Populating randomly..."
+                    echo "Found station was '$station'..."
                     action='random'
                     parse_action $action
                 fi
             else 
                 echo "No last station found! Populating randomly..."
+                echo "Found station was '$station'..."
                 action='random'
                 parse_action $action
             fi

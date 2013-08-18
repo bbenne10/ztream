@@ -4,7 +4,7 @@ PLAYER='mpv'
 PLAYER_OPTS='--no-video'
 LAST_STATION_PATH="$HOME/.last_station"
 FIFO=1
-FIFO_PATH="$HOME/.ztream_fifo"
+FIFO_PATH="$HOME/.ztream_fifo" # THIS FILE WILL GET DELETED ON STARTUP UNCONDITIONALLY
 
 typeset -A stations
 stations=('beatblender' http://sfstream1.somafm.com:8384
@@ -40,13 +40,14 @@ function play_station() {
     echo "Playing $station..."
     echo $station >! $LAST_STATION_PATH
     if [ $FIFO ]; then
-        if [ ! -p $FIFO_PATH ]; then
-            mkfifo "$FIFO_PATH"
-            exit
+        if [ -e $FIFO_PATH ]; then
+            rm "$FIFO_PATH"
         fi
-        $PLAYER $PLAYER_OPTS --input-file="$FIFO_PATH" $stations[$station] 1>&2 2>/dev/null &
+
+        mkfifo "$FIFO_PATH"
+        $PLAYER $PLAYER_OPTS --input-file="$FIFO_PATH" $stations[$station] 2>&1 >/dev/null &
     else
-        $PLAYER $PLAYER_OPTS $stations[$station] 1>&2 2>/dev/null &
+        $PLAYER $PLAYER_OPTS $stations[$station] 2>&1 >/dev/null &
     fi;
 }
 

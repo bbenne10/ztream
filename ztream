@@ -1,11 +1,11 @@
 #! /bin/zsh
-
 PLAYER='mpv'
-PLAYER_OPTS='--no-video'
+PLAYER_OPTS=('--no-video')
 LAST_STATION_PATH="$HOME/.last_station"
 FIFO=1
 FIFO_PATH="$HOME/.ztream_fifo" # THIS FILE WILL GET DELETED ON STARTUP UNCONDITIONALLY
 DMENU_OPTS=(-w 0.6 -y 0.2)
+OTHER_PLAYERS=(spotify mocp)
 
 typeset -A stations
 stations=('beatblender' http://sfstream1.somafm.com:8384
@@ -23,21 +23,15 @@ stations=('beatblender' http://sfstream1.somafm.com:8384
 # Unless you have an idea of what you're doing, there's no need to head below.
 ###############################################################################
 
-function get_action() {
-    actions=('change' 'random' 'last' 'stop')
-    if [ ${actions[(r)$1]} ]; then 
-        action=$1
-    else
-        action=$(print -r -l ${actions} | dmenu)
-    fi
-}
-
 function play_station() {
-    pkill $PLAYER 
-    station=$1; 
-    echo "Playing $station..."
+    pkill $PLAYER
+    for plyr in "${OTHER_PLAYERS[@]}"; do
+        pkill $plyr;
+    done
+
     echo $station >! $LAST_STATION_PATH
-    if [ $FIFO ]; then
+
+    if [ $FIFO -eq 1 ]; then
         if [ -e $FIFO_PATH ]; then
             rm "$FIFO_PATH"
         fi
@@ -62,32 +56,34 @@ function parse_action() {
             # pick a random station from above
             integer index=$RANDOM%${#${(k)stations}}+1
             station=${${(k)stations}[$index]}
+            echo "Chose '$station'"
             play_station $station
 
-        elif [ $action = 'last' ]; then 
+        elif [ $action = 'last' ]; then
             # choose the last station
             station=$(cat $LAST_STATION_PATH)
-            if [ -n $station ]; then
-                if [ ${(k)actions[(r)$station]} ]; then
-                    play_station $station
-                else
-                    echo "Invalid last station found! Populating randomly..."
-                    echo "Found station was '$station'..."
-                    action='random'
-                    parse_action $action
-                fi
-            else 
-                echo "No last station found! Populating randomly..."
-                echo "Found station was '$station'..."
-                action='random'
-                parse_action $action
-            fi
+            play_station $station
+            #if [[ $("$station") != '' ]]; then
+            #    if [ ${(k)actions[(r)$station]} ]; then
+            #        play_station $station
+            #    else
+            #        echo "Invalid last station found! Populating randomly..."
+            #        echo "Found station was '$station'..."
+            #        action='random'
+            #        parse_action $action
+            #    fi
+            #else
+            #    echo "No last station found! Populating randomly..."
+            #    echo "Found station was '$station'..."
+            #    action='random'
+            #    parse_action $action
+            #fi
 
 
-        elif [ $action = 'stop' ]; then 
+        elif [ $action = 'stop' ]; then
             # STAHP
             pkill $PLAYER
-        fi 
+        fi
     fi
 }
 

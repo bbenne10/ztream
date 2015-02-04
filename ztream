@@ -5,6 +5,7 @@ PLAYER_OPTS='--no-video'
 LAST_STATION_PATH="$HOME/.last_station"
 FIFO=1
 FIFO_PATH="$HOME/.ztream_fifo" # THIS FILE WILL GET DELETED ON STARTUP UNCONDITIONALLY
+DMENU_OPTS=(-w 0.6 -y 0.2)
 
 typeset -A stations
 stations=('beatblender' http://sfstream1.somafm.com:8384
@@ -42,9 +43,9 @@ function play_station() {
         fi
 
         mkfifo "$FIFO_PATH"
-        $PLAYER $PLAYER_OPTS --input-file="$FIFO_PATH" $stations[$station] 2>&1 >/dev/null &
+        $PLAYER "${PLAYER_OPTS[@]}" --input-file="$FIFO_PATH" $stations[$station] 2>&1 >/dev/null &
     else
-        $PLAYER $PLAYER_OPTS $stations[$station] 2>&1 >/dev/null &
+        $PLAYER "${PLAYER_OPTS[@]}" $stations[$station] 2>&1 >/dev/null &
     fi;
 }
 
@@ -52,7 +53,7 @@ function parse_action() {
     if [ -n $action ]; then
         if [ $action = 'change' ]; then
             # pick a new station
-            station=$(print -r -l ${(k)stations} | sort | dmenu)
+            station=$(print -r -l ${(k)stations} | sort | dmenu "${DMENU_OPTS[@]}" "$@" -p "Station: ")
             if [ -n $station ]; then
                 play_station $station
             fi
@@ -91,5 +92,6 @@ function parse_action() {
 }
 
 action=""
-get_action $1
-parse_action $action
+actions=('change' 'random' 'last' 'stop')
+action=$(print -r -l ${actions} | dmenu "${DMENU_OPTS[@]}" "$@" -p "Action: ")
+parse_action $@

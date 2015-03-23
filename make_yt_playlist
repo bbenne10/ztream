@@ -1,0 +1,74 @@
+#! /usr/bin/env python
+
+from __future__ import print_function
+
+import click
+import requests
+
+BASE_URL = 'http://gdata.youtube.com/feeds/api/videos'
+
+
+def parse_links(body):
+    links = []
+    try:
+        for entry in body['feed']['entry']:
+            for link in entry['link']:
+                if link['type'] == 'text/html' and link['rel'] == 'alternate':
+                    links.append(link['href'].rstrip('&feature=youtube_gdata'))
+        return links
+    except KeyError:
+        return None
+
+
+@click.command() # noqa (note: mccabe)
+@click.option('-a', '--author', required=True)
+@click.option('-o', '--output', default=None)
+def run(author, output):
+    if output is None:
+        # if no file provided, file is author name
+        output = author
+
+
+    params = {
+        'max-results': '50',
+        'alt': 'json',
+        'author': author
+    }
+
+    i = 1
+    total = None
+    links = []
+
+    while True:
+        if total and i >= total:
+            break
+
+        params['start-index'] = i
+        resp = requests.get(BASE_URL, params=params)
+
+        try:
+            body = resp.json()
+        except:
+            break
+
+        if not total:
+            total = body['feed']['openSearch$totalResults']['$t']
+            if total > 500:
+                print("RSS Feed limits us to first 500 entries. "
+                      "Grabbing those...")
+                total = 500
+
+        to_ext = parse_links(body)
+
+        if to_ext is not None:
+            links.extend(to_ext)
+            i = len(links)
+        else:
+            break
+
+    with open(output, 'w') as f:
+        for link in links:
+            f.write("{}\n".format(link))
+
+if __name__ == '__main__':
+    run()

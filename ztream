@@ -1,4 +1,5 @@
 #! /bin/zsh
+
 PLAYER='mpv'
 PLAYER_OPTS=('--no-video')
 LAST_STATION_PATH="$HOME/.last_station"
@@ -63,23 +64,6 @@ function parse_action() {
             # choose the last station
             station=$(cat $LAST_STATION_PATH)
             play_station $station
-            #if [[ $("$station") != '' ]]; then
-            #    if [ ${(k)actions[(r)$station]} ]; then
-            #        play_station $station
-            #    else
-            #        echo "Invalid last station found! Populating randomly..."
-            #        echo "Found station was '$station'..."
-            #        action='random'
-            #        parse_action $action
-            #    fi
-            #else
-            #    echo "No last station found! Populating randomly..."
-            #    echo "Found station was '$station'..."
-            #    action='random'
-            #    parse_action $action
-            #fi
-
-
         elif [ $action = 'stop' ]; then
             # STAHP
             pkill $PLAYER
